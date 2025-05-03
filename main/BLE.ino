@@ -4,6 +4,7 @@ class connectionCallback : public BLEClientCallbacks {
   void onDisconnect(BLEClient *pclient) {
     device_connected = false;
     myDevice = nullptr;
+    deviceAddress = "none";
     // Reactivates scanning
     pBLEScan = BLEDevice::getScan();
     pBLEScan->setActiveScan(true);

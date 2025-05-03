@@ -1,7 +1,7 @@
 // Original code: https://github.com/Xinyuan-LilyGO/LilyGO-T-SIM7000G/blob/master/examples/Arduino_NetworkTest/Arduino_NetworkTest.ino
 
 #define TINY_GSM_MODEM_SIM7000
-#define TINY_GSM_RX_BUFFER 1024 // Set RX buffer to 1Kb
+#define TINY_GSM_RX_BUFFER 1024  // Set RX buffer to 1Kb
 #define TINY_GSM_MODEM_SIM7000SSL
 #define TINY_GSM_USE_GPRS true
 #define TINY_GSM_USE_WIFI false
@@ -25,7 +25,7 @@
 #include <BLEClient.h>
 
 int scanTime = 5;  //In seconds
-BLEScan *pBLEScan;
+BLEScan* pBLEScan;
 BLEClient* pClient;
 BLERemoteCharacteristic* remoteCharacteristic;
 BLEAdvertisedDevice* myDevice;
@@ -38,14 +38,14 @@ bool device_scanned = false;
 bool device_connected = false;
 
 // APN credentials
-const char apn[]  = "internet.movistar.com.co";
+const char apn[] = "internet.movistar.com.co";
 const char gprsUser[] = "movistar";
 const char gprsPass[] = "movistar";
 
 // Server details
-const char server[]   = "69.164.197.239";
+const char server[] = "69.164.197.239";
 const char resource[] = "/devices/";
-const int  port       = 5000;
+const int port = 5000;
 
 // Message details
 int heartRate = 0;
@@ -55,31 +55,46 @@ bool isPowered = false;
 float lat = 0.0f;
 float lon = 0.0f;
 String timestamp = "";
-String deviceAddress = "";
+String deviceAddress = "none";
 
 #ifdef DUMP_AT_COMMANDS
-  #include <StreamDebugger.h>
-  StreamDebugger debugger(SerialAT, SerialMon);
-  TinyGsm modem(debugger);
+#include <StreamDebugger.h>
+StreamDebugger debugger(SerialAT, SerialMon);
+TinyGsm modem(debugger);
 #else
-  TinyGsm modem(SerialAT);
+TinyGsm modem(SerialAT);
 #endif
 
 //TinyGsmClientSecure client(modem);
 TinyGsmClient client(modem);
 
 // LilyGO T-SIM7000G Pinout
-#define UART_BAUD           115200
-#define PIN_DTR             25
-#define PIN_TX              27
-#define PIN_RX              26
-#define PWR_PIN             4
-#define LED_PIN             12
-#define BATT_PIN            35
+#define UART_BAUD 115200
+#define PIN_DTR 25
+#define PIN_TX 27
+#define PIN_RX 26
+#define PWR_PIN 4
+#define LED_PIN 12
+#define BATT_PIN 35
+
+// Timer variables
+hw_timer_t* timer = NULL;  // Create a hardware timer object
+int counter = 0;
+bool sendData = false;
+const int reportPeriod = 300;
+
+// Timer interrupt to blink when ble is disconnected
+void IRAM_ATTR onTimer() {
+  counter++;
+  if (counter >= reportPeriod) {
+    counter = 0;
+    sendData = true;
+  }
+}
 
 // Callback for BLE Scanner results
 class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks {
-  void onResult(BLEAdvertisedDevice advertisedDevice) {    
+  void onResult(BLEAdvertisedDevice advertisedDevice) {
     if (advertisedDevice.haveServiceUUID() && advertisedDevice.isAdvertisingService(serviceUUID)) {
       Serial.println("Found target BLE device!");
       myDevice = new BLEAdvertisedDevice(advertisedDevice);
@@ -87,7 +102,7 @@ class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks {
   }
 };
 
-void setup(){
+void setup() {
   // Set console baud rate
   SerialMon.begin(115200);
 
@@ -118,6 +133,11 @@ void setup(){
   enableGPS();
   connectToGPRS();
 
+  // Setup timer to blink when BLE is not conected
+  timer = timerBegin(1000000); // Configure timer: timer 0, prescaler of 80 (1 µs per tick), count up
+  timerAttachInterrupt(timer, &onTimer); // Attach the timer to the interrupt
+  timerAlarm(timer, 1000000, true, 0); // Set the timer to trigger every 1000ms (1.000.000 µs)
+
   // BLE setup
   BLEDevice::init(F("BLE Client"));
   pBLEScan = BLEDevice::getScan();  //create new scan
@@ -127,7 +147,7 @@ void setup(){
   pBLEScan->setWindow(99);  // less or equal setInterval value
 }
 
-void loop(){
+void loop() {
   String res;
   Serial.println("================");
 
@@ -144,18 +164,17 @@ void loop(){
 
   // Validates BLE state and reconnects if needed
   if (!device_connected) {
-    BLEScanResults *foundDevices = pBLEScan->start(scanTime, false);
+    BLEScanResults* foundDevices = pBLEScan->start(scanTime, false);
     pBLEScan->clearResults();
   }
-  
-  if(myDevice && !device_connected){
+
+  if (myDevice && !device_connected) {
     connectToDevice();
   }
 
-  // Send data
-  if (modem.isGprsConnected() && device_connected){
+  // Send data when device is connected
+  if ((modem.isGprsConnected() && device_connected) || sendData) {
     sendPostRequest();
-    delay(10000);
+    sendData = false;
   }
-
 }
