@@ -1,3 +1,23 @@
+void modemPowerOn(){
+  pinMode(PWR_PIN, OUTPUT);
+  digitalWrite(PWR_PIN, LOW);
+  delay(1000);
+  digitalWrite(PWR_PIN, HIGH);
+}
+
+void modemPowerOff(){
+  pinMode(PWR_PIN, OUTPUT);
+  digitalWrite(PWR_PIN, HIGH);
+  delay(1500);
+  digitalWrite(PWR_PIN, LOW);
+}
+
+void modemRestart(){
+  modemPowerOff();
+  delay(1000);
+  modemPowerOn();
+}
+
 void setupGSM(){
   String res = "";
   Serial.println("========SIMCOMATI======");

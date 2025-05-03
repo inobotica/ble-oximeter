@@ -10,15 +10,32 @@
 // Set serial for debug console (to the Serial Monitor, default speed 115200)
 #define SerialMon Serial
 
-// See all AT commands, if wanted
-// #define DUMP_AT_COMMANDS
-
 // set GSM PIN, if any
 #define GSM_PIN ""
 
 #include <TinyGsmClient.h>
 #include <Ticker.h>
 #include <ArduinoJson.h>
+
+// BLE variables
+#include <BLEDevice.h>
+#include <BLEUtils.h>
+#include <BLEScan.h>
+#include <BLEAdvertisedDevice.h>
+#include <BLEClient.h>
+
+int scanTime = 5;  //In seconds
+BLEScan *pBLEScan;
+BLEClient* pClient;
+BLERemoteCharacteristic* remoteCharacteristic;
+BLEAdvertisedDevice* myDevice;
+
+// BLE Device variables
+static BLEUUID serviceUUID("0000fee0-0000-1000-8000-00805f9b34fb");
+static BLEUUID charUUID("0000fee1-0000-1000-8000-00805f9b34fb");
+
+bool device_scanned = false;
+bool device_connected = false;
 
 // APN credentials
 const char apn[]  = "internet.movistar.com.co";
@@ -27,16 +44,18 @@ const char gprsPass[] = "movistar";
 
 // Server details
 const char server[]   = "69.164.197.239";
-const char resource[] = "/devices/id_1";
+const char resource[] = "/devices/";
 const int  port       = 5000;
 
 // Message details
 int heartRate = 0;
 int saturation = 0;
 int battLevel = 0;
+bool isPowered = false;
 float lat = 0.0f;
 float lon = 0.0f;
 String timestamp = "";
+String deviceAddress = "";
 
 #ifdef DUMP_AT_COMMANDS
   #include <StreamDebugger.h>
@@ -58,26 +77,15 @@ TinyGsmClient client(modem);
 #define LED_PIN             12
 #define BATT_PIN            35
 
-void modemPowerOn(){
-  pinMode(PWR_PIN, OUTPUT);
-  digitalWrite(PWR_PIN, LOW);
-  delay(1000);
-  digitalWrite(PWR_PIN, HIGH);
-}
-
-void modemPowerOff(){
-  pinMode(PWR_PIN, OUTPUT);
-  digitalWrite(PWR_PIN, HIGH);
-  delay(1500);
-  digitalWrite(PWR_PIN, LOW);
-}
-
-
-void modemRestart(){
-  modemPowerOff();
-  delay(1000);
-  modemPowerOn();
-}
+// Callback for BLE Scanner results
+class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks {
+  void onResult(BLEAdvertisedDevice advertisedDevice) {    
+    if (advertisedDevice.haveServiceUUID() && advertisedDevice.isAdvertisingService(serviceUUID)) {
+      Serial.println("Found target BLE device!");
+      myDevice = new BLEAdvertisedDevice(advertisedDevice);
+    }
+  }
+};
 
 void setup(){
   // Set console baud rate
@@ -105,10 +113,18 @@ void setup(){
     return;
   }
 
+  // GSM setup
   setupGSM();
   enableGPS();
   connectToGPRS();
-  //printLatLon();
+
+  // BLE setup
+  BLEDevice::init(F("BLE Client"));
+  pBLEScan = BLEDevice::getScan();  //create new scan
+  pBLEScan->setAdvertisedDeviceCallbacks(new MyAdvertisedDeviceCallbacks());
+  pBLEScan->setActiveScan(true);  //active scan uses more power, but get results faster
+  pBLEScan->setInterval(100);
+  pBLEScan->setWindow(99);  // less or equal setInterval value
 }
 
 void loop(){
@@ -126,11 +142,20 @@ void loop(){
   getLocation();
   readBatteryLevel();
 
-  if (modem.isGprsConnected()){
+  // Validates BLE state and reconnects if needed
+  if (!device_connected) {
+    BLEScanResults *foundDevices = pBLEScan->start(scanTime, false);
+    pBLEScan->clearResults();
+  }
+  
+  if(myDevice && !device_connected){
+    connectToDevice();
+  }
+
+  // Send data
+  if (modem.isGprsConnected() && device_connected){
     sendPostRequest();
-    delay(5000);
-  } else {
-    reconnectToGPRS();
+    delay(10000);
   }
 
 }

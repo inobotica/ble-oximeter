@@ -31,7 +31,7 @@ String composeMessage(){
   }
   
   stateJsonDoc["batt_level"] = battLevel;
-  stateJsonDoc["is_powered"] = true;
+  stateJsonDoc["is_powered"] = isPowered;
   
   jsonDoc["state"] = stateJsonDoc;
   jsonDoc["gps"] = gpsJsonDoc;

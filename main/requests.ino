@@ -17,9 +17,11 @@ void sendPostRequest(){
   // Making an HTTP POST request
   Serial.println("POST request...");
   // Prepare your HTTP POST request data
-  String httpRequestData = composeMessage();//"{\"latitude\":\"5656\",\"longitude\":\"5656\",\"altitude\":\"5656\",\"speed\":\"5656\",\"deviceId\":\"111112222200000\"}";
-
-  client.print(String("POST ") + resource + " HTTP/1.1\r\n");
+  String httpRequestData = composeMessage();
+  deviceAddress.replace(":", "-");
+  String resourcePath = String(resource) + deviceAddress;
+  
+  client.print(String("POST ") + resourcePath + " HTTP/1.1\r\n");
   client.print(String("Host: ") + server + ":"+ String(port) + "\r\n");
   client.println("Connection: keep-alive");
   //client.println("Connection: close");
