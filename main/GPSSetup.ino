@@ -52,12 +52,30 @@ void getLocation(){
   int   gps_minute    = 0;
   int   gps_second    = 0;
   
+  gsmSignalQuality = modem.getSignalQuality();
+  
+  if(gsmSignalQuality<=32){
+    gsmSignalQuality = map(gsmSignalQuality, 0, 32, 0, 100);
+  } else {
+    gsmSignalQuality = 0;
+  }
+
   if (modem.getGPS(&gps_latitude, &gps_longitude, &gps_speed, &gps_altitude,
                     &gps_vsat, &gps_usat, &gps_accuracy, &gps_year, &gps_month,
                     &gps_day, &gps_hour, &gps_minute, &gps_second)) { 
     lat = gps_latitude;
     lon = gps_longitude; 
-    timestamp = String(gps_year)+"-"+String(gps_month)+"-"+String(gps_day)+" "+String(gps_hour)+":"+String(gps_minute)+":"+String(gps_second);
+    gpsSignalQuality = constrain(gps_vsat,0,10)*10;
+    
+    char buffer[30];
+    sprintf(buffer, "%d-%02d-%02d %02d:%02d:%02d", gps_year, gps_month, gps_day, gps_hour, gps_minute, gps_second);    
+    timestamp = String(buffer);
+    //timestamp = String(gps_year)+"-"+String(gps_month)+"-"+String(gps_day)+" "+String(gps_hour)+":"+String(gps_minute)+":"+String(gps_second);
+
+    if(!isTimeSet){
+      isTimeSet = true;      
+      setTime(gps_year, gps_month, gps_day, gps_hour, gps_minute, gps_second);
+    }
   } else {
     Serial.println("Couldn't get GPS/GNSS/GLONASS location, retrying in 15s.");
   }

@@ -1,5 +1,9 @@
 // Original code: https://github.com/Xinyuan-LilyGO/LilyGO-T-SIM7000G/blob/master/examples/Arduino_NetworkTest/Arduino_NetworkTest.ino
+/*
+Requirements:
+- RTClib: Adafruit
 
+*/
 #define TINY_GSM_MODEM_SIM7000
 #define TINY_GSM_RX_BUFFER 1024  // Set RX buffer to 1Kb
 #define TINY_GSM_MODEM_SIM7000SSL
@@ -15,7 +19,15 @@
 
 #include <TinyGsmClient.h>
 #include <Ticker.h>
+#include <SPI.h>
+#include <SD.h>
 #include <ArduinoJson.h>
+
+// RTC
+#include "RTClib.h"
+RTC_DS3231 rtc;
+bool isTimeSet = false;
+String RTCTimestamp = "";
 
 // BLE variables
 #include <BLEDevice.h>
@@ -33,9 +45,9 @@ BLEAdvertisedDevice* myDevice;
 // BLE Device variables
 static BLEUUID serviceUUID("0000fee0-0000-1000-8000-00805f9b34fb");
 static BLEUUID charUUID("0000fee1-0000-1000-8000-00805f9b34fb");
-
 bool device_scanned = false;
 bool device_connected = false;
+int bleSignalQuality = -1;
 
 // APN credentials
 const char apn[] = "internet.movistar.com.co";
@@ -55,7 +67,16 @@ bool isPowered = false;
 float lat = 0.0f;
 float lon = 0.0f;
 String timestamp = "";
-String deviceAddress = "none";
+String deviceAddress = "";
+String imei = "";
+int gsmSignalQuality = -1;
+int gpsSignalQuality = -1;
+bool requestResult = false;
+
+// SD variables
+bool isThereSD = false;
+String filename = "/data.log";
+int numberOfLines = 0;
 
 #ifdef DUMP_AT_COMMANDS
 #include <StreamDebugger.h>
@@ -77,11 +98,16 @@ TinyGsmClient client(modem);
 #define LED_PIN 12
 #define BATT_PIN 35
 
+#define SD_MISO 2
+#define SD_MOSI 15
+#define SD_SCLK 14
+#define SD_CS 13
+
 // Timer variables
 hw_timer_t* timer = NULL;  // Create a hardware timer object
 int counter = 0;
 bool sendData = false;
-const int reportPeriod = 300;
+const int reportPeriod = 60;
 
 // Timer interrupt to blink when ble is disconnected
 void IRAM_ATTR onTimer() {
@@ -114,9 +140,19 @@ void setup() {
   pinMode(LED_PIN, OUTPUT);
   digitalWrite(LED_PIN, HIGH);
 
+  // Setting RTC
+  if (!rtc.begin()) {
+    Serial.println("Couldn't find RTC");
+    Serial.flush();
+    while (1) delay(10);
+  }
+
   // Turn on GPRS modem
   modemPowerOn();
 
+  // Init SD card
+  initSDCard();
+  
   SerialAT.begin(UART_BAUD, SERIAL_8N1, PIN_RX, PIN_TX);
   delay(10000);
 
@@ -162,19 +198,28 @@ void loop() {
   getLocation();
   readBatteryLevel();
 
+  Serial.println("Scanning ble...");
   // Validates BLE state and reconnects if needed
   if (!device_connected) {
     BLEScanResults* foundDevices = pBLEScan->start(scanTime, false);
     pBLEScan->clearResults();
   }
 
+  Serial.println("connecting ble...");
   if (myDevice && !device_connected) {
     connectToDevice();
   }
 
+  Serial.println("Sending data...");
   // Send data when device is connected
   if ((modem.isGprsConnected() && device_connected) || sendData) {
-    sendPostRequest();
+    requestResult = sendPostRequest();
+    if(requestResult && isThereSD){
+      appendReportToFile();
+    }
     sendData = false;
   }
+
+  Serial.println("Reading time...");
+  getTime();
 }

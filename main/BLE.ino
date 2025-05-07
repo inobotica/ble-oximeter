@@ -5,6 +5,7 @@ class connectionCallback : public BLEClientCallbacks {
     device_connected = false;
     myDevice = nullptr;
     deviceAddress = "none";
+    bleSignalQuality = -1;
     // Reactivates scanning
     pBLEScan = BLEDevice::getScan();
     pBLEScan->setActiveScan(true);
@@ -21,6 +22,10 @@ void notifyCallback(
     // Checks for correct message payload 
     if(length==4){
       deviceAddress = myDevice->getAddress().toString();
+      bleSignalQuality = myDevice->getRSSI();
+      bleSignalQuality = constrain(bleSignalQuality,-100,-50);
+      bleSignalQuality = map(bleSignalQuality,-100,-50,0,100);
+
       heartRate = (int) data[1];
       saturation = (int) data[2];
       Serial.print("MAC:");
@@ -28,7 +33,9 @@ void notifyCallback(
       Serial.print(" | Heart rate:");
       Serial.print(heartRate);
       Serial.print(" | Saturation:");
-      Serial.println(saturation);
+      Serial.print(saturation);
+      Serial.print(" | signal:");
+      Serial.println(bleSignalQuality);
     }
 }
 

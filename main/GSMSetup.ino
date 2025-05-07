@@ -63,6 +63,8 @@ void setupGSM(){
   }
   res = "";
   Serial.println("=======================");
+
+  imei = modem.getIMEI();
 }
 
 void printModemInfo(){

@@ -6,7 +6,7 @@ String composeMessage(){
   StaticJsonDocument<200> rtcJsonDoc;
 
   if(timestamp.length()>0){
-    rtcJsonDoc["timestamp"] = timestamp;
+    rtcJsonDoc["timestamp"] = RTCTimestamp;
     gpsJsonDoc["timestamp"] = timestamp;
   }else{
     rtcJsonDoc["timestamp"] = nullptr;
@@ -32,7 +32,12 @@ String composeMessage(){
   
   stateJsonDoc["batt_level"] = battLevel;
   stateJsonDoc["is_powered"] = isPowered;
-  
+  stateJsonDoc["gsm_signal"] = gsmSignalQuality;
+  stateJsonDoc["ble_signal"] = bleSignalQuality;
+  stateJsonDoc["gps_signal"] = gpsSignalQuality;
+  stateJsonDoc["imei"] = imei;
+  stateJsonDoc["mac"] = deviceAddress;
+
   jsonDoc["state"] = stateJsonDoc;
   jsonDoc["gps"] = gpsJsonDoc;
   jsonDoc["rtc"] = rtcJsonDoc;
