@@ -11,9 +11,11 @@ void readConfiguration(){
   apnPass.toCharArray(gprsPass, sizeof(gprsPass));
 
   // Server config
-  int serverPort = preferences.getInt("port", 80);
+  port = preferences.getInt("port", 5000);
   String serverUrl = preferences.getString("server", "69.164.197.239");
   String serverResource = preferences.getString("resource", "/devices/");
+  serverUrl.toCharArray(server, sizeof(server));
+  serverResource.toCharArray(resource, sizeof(resource));
 
   preferences.end();
 }
@@ -26,7 +28,7 @@ void setAPN(String apnUrl, String apnUser, String apnPass){
   preferences.end();
 }
 
-void setServer(String serverUrl, String serverPort, String serverResource){
+void setServer(String serverUrl, int serverPort, String serverResource){
   preferences.begin(CONFIGURATION_NAMESPACE, false);
   preferences.putInt("port", serverPort);
   preferences.putString("server", serverUrl);

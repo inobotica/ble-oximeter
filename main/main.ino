@@ -13,6 +13,8 @@ SIMs:
 #define TINY_GSM_USE_GPRS true
 #define TINY_GSM_USE_WIFI false
 #define CONFIGURATION_NAMESPACE "configuration"
+#define CMD_APN 1
+#define CMD_SERVER 2
 
 #define SerialAT Serial1
 // Set serial for debug console (to the Serial Monitor, default speed 115200)
@@ -56,14 +58,14 @@ int bleSignalQuality = -1;
 
 // APN credentials
 Preferences preferences;
-char apn[40] = "internet.movistar.com.co";
-char gprsUser[15] = "movistar";
-char gprsPass[15] = "movistar";
+char apn[40] = "";
+char gprsUser[15] = "";
+char gprsPass[15] = "";
 
 // Server details
-const char server[] = "69.164.197.239";
-const char resource[] = "/devices/";
-const int port = 5000;
+char server[100] = "";
+char resource[20] = "";
+int port = 0;
 
 // Message details
 int heartRate = 0;
@@ -145,6 +147,9 @@ void setup() {
   // Set LED OFF
   pinMode(LED_PIN, OUTPUT);
   digitalWrite(LED_PIN, HIGH);
+
+  // Read configuration
+  readConfiguration();
 
   // Setting RTC
   if (!rtc.begin()) {
