@@ -216,14 +216,16 @@ void loop() {
     pBLEScan->clearResults();
   }
 
-  Serial.println("connecting ble...");
+  
   if (myDevice && !device_connected) {
+    Serial.println("connecting ble...");
     connectToDevice();
   }
 
-  Serial.println("Sending data...");
+  
   // Send data when device is connected
   if ((modem.isGprsConnected() && device_connected) || sendData) {
+    Serial.println("Sending data...");
     requestResult = sendPostRequest();
     if(requestResult && isThereSD){
       appendReportToFile();

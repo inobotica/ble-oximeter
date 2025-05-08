@@ -9,8 +9,13 @@ void readBatteryLevel(){
     isPowered = false;
   }
 
-  Serial.print(" | BATT:");
-  Serial.println(battLevel);
+  Serial.print("BATT:");
+  if (battLevel == -1){
+    Serial.println(" Charging");
+  } else {
+    Serial.println(battLevel);
+  }
+  
   //battLevel = constrain(battLevel, 3200, 4200);
   //battLevel = map(battLevel, 3200, 4200, 0, 100);
 }

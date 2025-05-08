@@ -16,7 +16,11 @@ void readSMS() {
     Serial.println("Command: "+command);
     processCommand(command);
   }    
-  
+
+  clearSMS();    
+}
+
+void clearSMS(){
   modem.sendAT("+CMGD=,4");
   modem.waitResponse(1000L);
 }
@@ -38,6 +42,7 @@ void processCommand(String command){
   } else if(commandLower.indexOf("reset")>=0){
     // Resets device
     Serial.println("Processing RESET command!");
+    clearSMS();
     ESP.restart();
 
   } else if(commandLower.indexOf("status")>=0){
