@@ -3,12 +3,16 @@
 Requirements:
 - RTClib: Adafruit
 
+SIMs:
+- 3189088129
+
 */
 #define TINY_GSM_MODEM_SIM7000
 #define TINY_GSM_RX_BUFFER 1024  // Set RX buffer to 1Kb
 #define TINY_GSM_MODEM_SIM7000SSL
 #define TINY_GSM_USE_GPRS true
 #define TINY_GSM_USE_WIFI false
+#define CONFIGURATION_NAMESPACE "configuration"
 
 #define SerialAT Serial1
 // Set serial for debug console (to the Serial Monitor, default speed 115200)
@@ -22,6 +26,7 @@ Requirements:
 #include <SPI.h>
 #include <SD.h>
 #include <ArduinoJson.h>
+#include <Preferences.h>
 
 // RTC
 #include "RTClib.h"
@@ -50,9 +55,10 @@ bool device_connected = false;
 int bleSignalQuality = -1;
 
 // APN credentials
-const char apn[] = "internet.movistar.com.co";
-const char gprsUser[] = "movistar";
-const char gprsPass[] = "movistar";
+Preferences preferences;
+char apn[40] = "internet.movistar.com.co";
+char gprsUser[15] = "movistar";
+char gprsPass[15] = "movistar";
 
 // Server details
 const char server[] = "69.164.197.239";
@@ -222,4 +228,5 @@ void loop() {
 
   Serial.println("Reading time...");
   getTime();
+  readSMS();
 }

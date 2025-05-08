@@ -30,6 +30,12 @@ void setupGSM(){
 
   Serial.println("=====Preferred mode selection=====");
 
+  // Set SMS to text mode
+  modem.sendAT("+CMGF=1");
+  modem.waitResponse(1000L, res);
+  Serial.print("SMS mode: ");
+  Serial.println(res);
+
   // Set to AUTO network selection
   modem.sendAT("+CNMP=2");
   if (modem.waitResponse(1000L, res) == 1) {
