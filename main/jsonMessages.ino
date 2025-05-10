@@ -5,11 +5,15 @@ String composeMessage(){
   StaticJsonDocument<200> gpsJsonDoc;
   StaticJsonDocument<200> rtcJsonDoc;
 
-  if(timestamp.length()>0){
+  if(RTCTimestamp.length()>0){    
     rtcJsonDoc["timestamp"] = RTCTimestamp;
-    gpsJsonDoc["timestamp"] = timestamp;
-  }else{
+  }else{    
     rtcJsonDoc["timestamp"] = nullptr;
+  }  
+  
+  if(timestamp.length()>0){    
+    gpsJsonDoc["timestamp"] = timestamp;
+  }else{    
     gpsJsonDoc["timestamp"] = nullptr;
   }
   

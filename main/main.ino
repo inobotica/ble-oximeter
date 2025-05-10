@@ -113,15 +113,15 @@ TinyGsmClient client(modem);
 
 // Timer variables
 hw_timer_t* timer = NULL;  // Create a hardware timer object
-int counter = 0;
-bool sendData = false;
-const int reportPeriod = 60;
+int periodCounter = 0;
+bool sendData = true;
+int reportPeriod = 0;
 
 // Timer interrupt to blink when ble is disconnected
 void IRAM_ATTR onTimer() {
-  counter++;
-  if (counter >= reportPeriod) {
-    counter = 0;
+  periodCounter++;
+  if (periodCounter >= (reportPeriod*60)) {
+    periodCounter = 0;
     sendData = true;
   }
 }

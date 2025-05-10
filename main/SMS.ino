@@ -49,6 +49,12 @@ void processCommand(String command){
     // Sends status report
     Serial.println("Processing STATUS command!");
     sendData = true;
+  } else if(commandLower.indexOf("report")>=0){
+    // Sends status report
+    Serial.println("Processing REPORT command!");
+    int period = command.substring(command.indexOf(":")+1).toInt();
+    setReportPeriod(period);
+    sendData = true;
   }
 }
 
@@ -77,6 +83,7 @@ void parseCommand(String command, int type){
       Serial.println(parts[i]);
     }
 
+    // Parse command according to instruction
     if(type==CMD_APN){
       setAPN(parts[0], parts[1], parts[2]);
     } else if(type==CMD_SERVER){
