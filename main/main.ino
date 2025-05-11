@@ -16,6 +16,17 @@ SIMs:
 #define CMD_APN 1
 #define CMD_SERVER 2
 
+// Enums for TX reason
+#define TX_REASON_NORMAL "time"
+#define TX_REASON_BLE "ble_report"
+#define TX_REASON_BLE_CONNECTED "ble_connected"
+#define TX_REASON_BLE_DISCONNECTED "ble_disconnected"
+#define TX_REASON_POWER_OFF "power_off"
+#define TX_REASON_POWER_ON "power_on"
+#define TX_REASON_TURNED_OFF "turned_off"
+#define TX_REASON_TURNED_ON "turned_on"
+#define TX_REASON_NOW "report_now"
+
 #define SerialAT Serial1
 // Set serial for debug console (to the Serial Monitor, default speed 115200)
 #define SerialMon Serial
@@ -80,6 +91,7 @@ String imei = "";
 int gsmSignalQuality = -1;
 int gpsSignalQuality = -1;
 bool requestResult = false;
+String txReason = TX_REASON_NORMAL;
 
 // SD variables
 bool isThereSD = false;
@@ -208,32 +220,37 @@ void loop() {
 
   getLocation();
   readBatteryLevel();
-
-  Serial.println("Scanning ble...");
+  
   // Validates BLE state and reconnects if needed
   if (!device_connected) {
+    Serial.println("Scanning ble...");
     BLEScanResults* foundDevices = pBLEScan->start(scanTime, false);
     pBLEScan->clearResults();
   }
 
-  
+  // Connecting to ble device if scanned
   if (myDevice && !device_connected) {
     Serial.println("connecting ble...");
     connectToDevice();
   }
 
-  
+  // Reading RTC time and SMS's
+  Serial.println("Reading time...");
+  getTime();
+  Serial.println("Reading SMS's...");
+  readSMS();
+
   // Send data when device is connected
   if ((modem.isGprsConnected() && device_connected) || sendData) {
     Serial.println("Sending data...");
     requestResult = sendPostRequest();
-    if(requestResult && isThereSD){
+
+    // Store to SD card if message wasn't received
+    if(!requestResult && isThereSD){
       appendReportToFile();
     }
+
+    txReason = TX_REASON_NORMAL;
     sendData = false;
   }
-
-  Serial.println("Reading time...");
-  getTime();
-  readSMS();
 }

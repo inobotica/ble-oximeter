@@ -1,11 +1,14 @@
 class connectionCallback : public BLEClientCallbacks {
-  void onConnect(BLEClient *pclient) {}
+  void onConnect(BLEClient *pclient) {
+    txReason = TX_REASON_BLE_CONNECTED;
+  }
 
   void onDisconnect(BLEClient *pclient) {
     device_connected = false;
     myDevice = nullptr;
     deviceAddress = "none";
     bleSignalQuality = -1;
+    txReason = TX_REASON_BLE_DISCONNECTED;
     // Reactivates scanning
     pBLEScan = BLEDevice::getScan();
     pBLEScan->setActiveScan(true);
@@ -36,6 +39,8 @@ void notifyCallback(
       Serial.print(saturation);
       Serial.print(" | signal:");
       Serial.println(bleSignalQuality);
+
+      txReason = TX_REASON_BLE;
     }
 }
 

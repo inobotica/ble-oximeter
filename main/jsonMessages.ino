@@ -41,6 +41,7 @@ String composeMessage(){
   stateJsonDoc["gps_signal"] = gpsSignalQuality;
   stateJsonDoc["imei"] = imei;
   stateJsonDoc["mac"] = deviceAddress;
+  stateJsonDoc["tx_reason"] = txReason;
 
   jsonDoc["state"] = stateJsonDoc;
   jsonDoc["gps"] = gpsJsonDoc;

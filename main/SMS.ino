@@ -55,6 +55,7 @@ void processCommand(String command){
     int period = command.substring(command.indexOf(":")+1).toInt();
     setReportPeriod(period);
     sendData = true;
+    txReason = TX_REASON_NOW;
   }
 }
 
