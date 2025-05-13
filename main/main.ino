@@ -27,6 +27,17 @@ SIMs:
 #define TX_REASON_TURNED_ON "turned_on"
 #define TX_REASON_NOW "report_now"
 
+#define DEFAULT_APN_URL "internet.movistar.com.co"
+#define DEFAULT_APN_USER "movistar"
+#define DEFAULT_APN_PASS "movistar"
+
+//#define DEFAULT_SERVER_URL "https://mozart-nuevo-backend.vercel.app"
+//#define DEFAULT_SERVER_PORT 443
+//#define DEFAULT_SERVER_RESOURCE "/api/oxiayuda-devices/"
+#define DEFAULT_SERVER_URL "69.164.197.239"
+#define DEFAULT_SERVER_PORT 5000
+#define DEFAULT_SERVER_RESOURCE "/devices/"
+
 #define SerialAT Serial1
 // Set serial for debug console (to the Serial Monitor, default speed 115200)
 #define SerialMon Serial
@@ -109,6 +120,7 @@ TinyGsm modem(SerialAT);
 //TinyGsmClientSecure client(modem);
 TinyGsmClient client(modem);
 
+
 // LilyGO T-SIM7000G Pinout
 #define UART_BAUD 115200
 #define PIN_DTR 25
@@ -117,6 +129,7 @@ TinyGsmClient client(modem);
 #define PWR_PIN 4
 #define LED_PIN 12
 #define BATT_PIN 35
+#define HALL_PIN 32
 
 #define SD_MISO 2
 #define SD_MOSI 15
@@ -155,6 +168,7 @@ void setup() {
   delay(10);
 
   pinMode(BATT_PIN, INPUT);
+  pinMode(HALL_PIN, INPUT);
 
   // Set LED OFF
   pinMode(LED_PIN, OUTPUT);
@@ -218,9 +232,6 @@ void loop() {
     return;
   }
 
-  getLocation();
-  readBatteryLevel();
-  
   // Validates BLE state and reconnects if needed
   if (!device_connected) {
     Serial.println("Scanning ble...");
@@ -234,11 +245,17 @@ void loop() {
     connectToDevice();
   }
 
+  getLocation();
+  readBatteryLevel();
+  
   // Reading RTC time and SMS's
   Serial.println("Reading time...");
   getTime();
   Serial.println("Reading SMS's...");
   readSMS();
+
+  Serial.print("Hall sensor: ");
+  Serial.println(analogReadMilliVolts(HALL_PIN));
 
   // Send data when device is connected
   if ((modem.isGprsConnected() && device_connected) || sendData) {

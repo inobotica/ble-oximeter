@@ -2,18 +2,18 @@ void readConfiguration(){
   preferences.begin(CONFIGURATION_NAMESPACE, false);
 
   // APN config
-  String apnUrl = preferences.getString("apn", "internet.movistar.com.co");
-  String apnUser = preferences.getString("user", "movistar");
-  String apnPass = preferences.getString("pass", "movistar");
+  String apnUrl = preferences.getString("apn", DEFAULT_APN_URL);
+  String apnUser = preferences.getString("user", DEFAULT_APN_USER);
+  String apnPass = preferences.getString("pass", DEFAULT_APN_PASS);
 
   apnUrl.toCharArray(apn, sizeof(apn));
   apnUser.toCharArray(gprsUser, sizeof(gprsUser));
   apnPass.toCharArray(gprsPass, sizeof(gprsPass));
 
-  // Server config
-  port = preferences.getInt("port", 5000);
-  String serverUrl = preferences.getString("server", "69.164.197.239");
-  String serverResource = preferences.getString("resource", "/devices/");
+  // Server config  
+  String serverUrl = preferences.getString("server", DEFAULT_SERVER_URL);
+  port = preferences.getInt("port", DEFAULT_SERVER_PORT);
+  String serverResource = preferences.getString("resource", DEFAULT_SERVER_RESOURCE);
   serverUrl.toCharArray(server, sizeof(server));
   serverResource.toCharArray(resource, sizeof(resource));
 

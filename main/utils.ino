@@ -16,6 +16,6 @@ void readBatteryLevel(){
     Serial.println(battLevel);
   }
   
-  //battLevel = constrain(battLevel, 3200, 4200);
-  //battLevel = map(battLevel, 3200, 4200, 0, 100);
+  battLevel = constrain(batteryVolts, 2500, 4100);
+  battLevel = map(battLevel, 2500, 4100, 0, 100);
 }

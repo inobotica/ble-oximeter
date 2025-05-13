@@ -6,7 +6,13 @@ bool sendPostRequest(){
   if(!client.connected()){
     if (!client.connect(server, port)) {
       Serial.println("Connection to server");
-      reconnectToGPRS();
+
+      if(!modem.isNetworkConnected()){
+        reconnectToGPRS();
+      } else {
+        Serial.println("GPRS connected but not to server!");
+      }      
+
       return requestStatus;
     } else {
       Serial.println("Connected to server!");      
@@ -23,7 +29,13 @@ bool sendPostRequest(){
   String resourcePath = String(resource) + imei;
   
   client.print(String("POST ") + resourcePath + " HTTP/1.1\r\n");
-  client.print(String("Host: ") + server + ":"+ String(port) + "\r\n");
+
+  if (port!=80 && port!=443){
+    client.print(String("Host: ") + server + ":"+ String(port) + "\r\n");
+  } else {
+    client.print(String("Host: ") + server + "\r\n");
+  }
+  
   client.println("Connection: keep-alive");
   //client.println("Connection: close");
   client.println("Content-Type: application/json");

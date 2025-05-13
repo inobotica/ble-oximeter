@@ -42,7 +42,8 @@ String composeMessage(){
   stateJsonDoc["imei"] = imei;
   stateJsonDoc["mac"] = deviceAddress;
   stateJsonDoc["tx_reason"] = txReason;
-
+  stateJsonDoc["hall_sensor"] = analogReadMilliVolts(HALL_PIN);
+  
   jsonDoc["state"] = stateJsonDoc;
   jsonDoc["gps"] = gpsJsonDoc;
   jsonDoc["rtc"] = rtcJsonDoc;
