@@ -15,6 +15,7 @@ SIMs:
 #define CONFIGURATION_NAMESPACE "configuration"
 #define CMD_APN 1
 #define CMD_SERVER 2
+#define RESET_DEVICE_AFTER 600//21600
 
 // Enums for TX reason
 #define TX_REASON_NORMAL "time"
@@ -26,7 +27,8 @@ SIMs:
 #define TX_REASON_TURNED_OFF "turned_off"
 #define TX_REASON_TURNED_ON "turned_on"
 #define TX_REASON_NOW "report_now"
-
+#define TX_REASON_PHONE_SET "phone_number_set"
+#define TX_REASON_PERIOD_SET "period_set"
 #define DEFAULT_APN_URL "internet.movistar.com.co"
 #define DEFAULT_APN_USER "movistar"
 #define DEFAULT_APN_PASS "movistar"
@@ -37,6 +39,9 @@ SIMs:
 #define DEFAULT_SERVER_URL "69.164.197.239"
 #define DEFAULT_SERVER_PORT 5000
 #define DEFAULT_SERVER_RESOURCE "/devices/"
+
+#define DEFAULT_REPORT_PERIOD 60
+#define DEFAULT_PHONE_NUMBER ""
 
 #define SerialAT Serial1
 // Set serial for debug console (to the Serial Monitor, default speed 115200)
@@ -90,12 +95,14 @@ char resource[20] = "";
 int port = 0;
 
 // Message details
+int uptime = 0;
 int heartRate = 0;
 int saturation = 0;
 int battLevel = 0;
 bool isPowered = false;
 float lat = 0.0f;
 float lon = 0.0f;
+float current = 0.0f;
 String timestamp = "";
 String deviceAddress = "";
 String imei = "";
@@ -141,10 +148,18 @@ hw_timer_t* timer = NULL;  // Create a hardware timer object
 int periodCounter = 0;
 bool sendData = true;
 int reportPeriod = 0;
+String phoneNumber = "";
 
 // Timer interrupt to blink when ble is disconnected
 void IRAM_ATTR onTimer() {
   periodCounter++;
+  uptime++;
+
+  if(uptime>=RESET_DEVICE_AFTER){
+    Serial.println("Restarting device");
+    ESP.restart();
+  }
+
   if (periodCounter >= (reportPeriod*60)) {
     periodCounter = 0;
     sendData = true;
@@ -247,6 +262,7 @@ void loop() {
 
   getLocation();
   readBatteryLevel();
+  readHallSensor();
   
   // Reading RTC time and SMS's
   Serial.println("Reading time...");
@@ -254,8 +270,8 @@ void loop() {
   Serial.println("Reading SMS's...");
   readSMS();
 
-  Serial.print("Hall sensor: ");
-  Serial.println(analogReadMilliVolts(HALL_PIN));
+  Serial.print("Hall sensor (A): ");
+  Serial.println(current);
 
   // Send data when device is connected
   if ((modem.isGprsConnected() && device_connected) || sendData) {

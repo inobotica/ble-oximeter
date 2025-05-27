@@ -49,13 +49,21 @@ void processCommand(String command){
     // Sends status report
     Serial.println("Processing STATUS command!");
     sendData = true;
+    txReason = TX_REASON_NOW;
   } else if(commandLower.indexOf("report")>=0){
     // Sends status report
     Serial.println("Processing REPORT command!");
     int period = command.substring(command.indexOf(":")+1).toInt();
     setReportPeriod(period);
     sendData = true;
-    txReason = TX_REASON_NOW;
+    txReason = TX_REASON_PERIOD_SET;
+  } else if(commandLower.indexOf("phone")>=0){
+    // Sends status report
+    Serial.println("Processing PHONE command!");
+    String phone = command.substring(command.indexOf(":")+1);
+    setPhoneNumber(phone);
+    sendData = true;
+    txReason = TX_REASON_PHONE_SET;
   }
 }
 

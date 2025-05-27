@@ -1,13 +1,26 @@
 void readBatteryLevel(){
   int batteryVolts = int(2*analogReadMilliVolts(BATT_PIN));
+  bool power = false;
 
   if(batteryVolts<2000){
     battLevel = -1;
-    isPowered = true;
+    power = true;
   } else {
     battLevel = batteryVolts;
-    isPowered = false;
+    power = false;
   }
+
+  if(power && !isPowered){
+    txReason = TX_REASON_POWER_ON;
+    sendData = true;
+    Serial.println("BATT: device powered ON!");
+  } else if (!power && isPowered){
+    txReason = TX_REASON_POWER_OFF;
+    sendData = true;
+    Serial.println("BATT: device powered OFF!");
+  }
+
+  isPowered = power;
 
   Serial.print("BATT:");
   if (battLevel == -1){
@@ -18,4 +31,20 @@ void readBatteryLevel(){
   
   battLevel = constrain(batteryVolts, 2500, 4100);
   battLevel = map(battLevel, 2500, 4100, 0, 100);
+}
+
+void readHallSensor(){
+  float tempCurrent = float(analogReadMilliVolts(HALL_PIN)/185.0f);
+
+  if(int(tempCurrent)>=30 && int(current)<=30){
+    txReason = TX_REASON_TURNED_ON;
+    sendData = true;
+    Serial.println("O2: oxygen powered ON!");
+  } else if(int(tempCurrent)<=30 && int(current)>=30){
+    txReason = TX_REASON_TURNED_OFF;
+    sendData = true;
+    Serial.println("O2: oxygen powered OFF!");
+  }
+
+  current = tempCurrent;
 }

@@ -18,7 +18,9 @@ void readConfiguration(){
   serverResource.toCharArray(resource, sizeof(resource));
 
   // Period config
-  reportPeriod = preferences.getInt("reportPeriod", 1);
+  reportPeriod = preferences.getInt("reportPeriod", DEFAULT_REPORT_PERIOD);
+  // Phone config
+  phoneNumber = preferences.getString("phoneNumber", DEFAULT_PHONE_NUMBER);
 
   preferences.end();
 
@@ -65,4 +67,14 @@ void setReportPeriod(int period){
   // Setting local variables
   reportPeriod = period;
   Serial.println("NEW Period: each "+String(reportPeriod)+" mins");
+}
+
+void setPhoneNumber(String phone){
+  preferences.begin(CONFIGURATION_NAMESPACE, false);  
+  preferences.putString("phoneNumber", phone);
+  preferences.end();
+
+  // Setting local variables
+  phoneNumber = phone;  
+  Serial.println("NEW Phone Number: "+ phoneNumber);
 }
