@@ -45,6 +45,7 @@ String composeMessage(){
   stateJsonDoc["hall_sensor"] = current;
   stateJsonDoc["uptime"] = uptime;
   stateJsonDoc["phone_number"] = phoneNumber;
+  stateJsonDoc["is_machine_on"] = isMachineOn;
   
   jsonDoc["state"] = stateJsonDoc;
   jsonDoc["gps"] = gpsJsonDoc;

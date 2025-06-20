@@ -33,18 +33,40 @@ void readBatteryLevel(){
   battLevel = map(battLevel, 2500, 4100, 0, 100);
 }
 
-void readHallSensor(){
-  float tempCurrent = float(analogReadMilliVolts(HALL_PIN)/185.0f);
+void readHallSensor(){  
+  long average_reading = 0;
+  
+  for(int i=0;i<5;i++){
+    average_reading = average_reading + long(analogReadMilliVolts(HALL_PIN));
+    delay(100);
+  }
+  
+  average_reading = average_reading/5;
+  int tempCurrent = abs(int(1000*(((float)average_reading - 2500.0f)/sensibility))) - 400;
+  current = int(current + tempCurrent)/2;
 
-  if(int(tempCurrent)>=30 && int(current)<=30){
-    txReason = TX_REASON_TURNED_ON;
-    sendData = true;
-    Serial.println("O2: oxygen powered ON!");
-  } else if(int(tempCurrent)<=30 && int(current)>=30){
-    txReason = TX_REASON_TURNED_OFF;
-    sendData = true;
-    Serial.println("O2: oxygen powered OFF!");
+  aggregatedCurrent = aggregatedCurrent + current;
+  currentCounter++;
+
+  if(currentCounter>=numberOfSamples){
+    currentCounter = 0;
+    tempCurrent = aggregatedCurrent/numberOfSamples;
+    aggregatedCurrent = 0;
+    Serial.println("ENTER!AAAAAA");
+
+    if(tempCurrent>=currentThreshold && !isMachineOn){
+      txReason = TX_REASON_TURNED_ON;
+      sendData = true;
+      isMachineOn = true;
+      Serial.println("O2: oxygen powered ON!");
+    } else if(tempCurrent<currentThreshold && isMachineOn){
+      txReason = TX_REASON_TURNED_OFF;
+      sendData = true;
+      isMachineOn = false;
+      Serial.println("O2: oxygen powered OFF!");
+    }
   }
 
-  current = tempCurrent;
+  Serial.print("Hall sensor (mA): ");
+  Serial.println(current);
 }

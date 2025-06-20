@@ -1,6 +1,7 @@
 class connectionCallback : public BLEClientCallbacks {
   void onConnect(BLEClient *pclient) {
     txReason = TX_REASON_BLE_CONNECTED;
+    digitalWrite(LED_PIN, LOW);
   }
 
   void onDisconnect(BLEClient *pclient) {
@@ -9,6 +10,7 @@ class connectionCallback : public BLEClientCallbacks {
     deviceAddress = "none";
     bleSignalQuality = -1;
     txReason = TX_REASON_BLE_DISCONNECTED;
+    digitalWrite(LED_PIN, HIGH);
     // Reactivates scanning
     pBLEScan = BLEDevice::getScan();
     pBLEScan->setActiveScan(true);

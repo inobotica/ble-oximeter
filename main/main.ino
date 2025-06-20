@@ -15,7 +15,7 @@ SIMs:
 #define CONFIGURATION_NAMESPACE "configuration"
 #define CMD_APN 1
 #define CMD_SERVER 2
-#define RESET_DEVICE_AFTER 600//21600
+#define RESET_DEVICE_AFTER 21600
 
 // Enums for TX reason
 #define TX_REASON_NORMAL "time"
@@ -102,7 +102,15 @@ int battLevel = 0;
 bool isPowered = false;
 float lat = 0.0f;
 float lon = 0.0f;
-float current = 0.0f;
+
+// Current variables
+int current = 0;
+int currentCounter = 0;
+long aggregatedCurrent = 0;
+bool isMachineOn = false;
+int currentThreshold = 500;
+int numberOfSamples = 8;
+
 String timestamp = "";
 String deviceAddress = "";
 String imei = "";
@@ -110,6 +118,7 @@ int gsmSignalQuality = -1;
 int gpsSignalQuality = -1;
 bool requestResult = false;
 String txReason = TX_REASON_NORMAL;
+bool isNetworkConnected = false;
 
 // SD variables
 bool isThereSD = false;
@@ -149,6 +158,7 @@ int periodCounter = 0;
 bool sendData = true;
 int reportPeriod = 0;
 String phoneNumber = "";
+float sensibility = 100.0f; // 100mV/A
 
 // Timer interrupt to blink when ble is disconnected
 void IRAM_ATTR onTimer() {
@@ -164,6 +174,16 @@ void IRAM_ATTR onTimer() {
     periodCounter = 0;
     sendData = true;
   }
+
+  if(isNetworkConnected){
+    if(device_connected){
+      digitalWrite(LED_PIN, LOW);
+    } else {
+      digitalWrite(LED_PIN, HIGH);
+    }
+  } else {
+    digitalWrite(LED_PIN, !digitalRead(LED_PIN));
+  }  
 }
 
 // Callback for BLE Scanner results
@@ -221,6 +241,9 @@ void setup() {
   enableGPS();
   connectToGPRS();
 
+  // Init current measurement
+  current = abs(int(1000*(((float)analogReadMilliVolts(HALL_PIN) - 2500.0f)/sensibility))) - 400;
+
   // Setup timer to blink when BLE is not conected
   timer = timerBegin(1000000); // Configure timer: timer 0, prescaler of 80 (1 µs per tick), count up
   timerAttachInterrupt(timer, &onTimer); // Attach the timer to the interrupt
@@ -238,6 +261,9 @@ void setup() {
 void loop() {
   String res;
   Serial.println("================");
+
+  // Checks network status
+  isNetworkConnected = modem.isNetworkConnected();
 
   // Restarts modem if needed
   if (!modem.init()) {
@@ -269,9 +295,6 @@ void loop() {
   getTime();
   Serial.println("Reading SMS's...");
   readSMS();
-
-  Serial.print("Hall sensor (A): ");
-  Serial.println(current);
 
   // Send data when device is connected
   if ((modem.isGprsConnected() && device_connected) || sendData) {
