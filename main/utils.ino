@@ -70,3 +70,46 @@ void readHallSensor(){
   Serial.print("Hall sensor (mA): ");
   Serial.println(current);
 }
+
+String waitForResponse(String command, unsigned long timeout) {
+  String message = "";
+  String line = "";
+  unsigned long startTime = millis();
+
+  // Enviar el command antes de escuchar
+  if(command.length()>0){
+    SerialAT.println(command);
+  }
+  
+  while (millis() - startTime < timeout) {
+    while (SerialAT.available()) {
+      char c = SerialAT.read();
+
+      if (c == '\n' || c == '\r') {
+        if (line.length() > 0) {
+          if (message.length() > 0) {
+            message += "\n";  // separador entre respuestas
+          }
+          message += line;
+          line = "";  // limpiar buffer temporal
+        }
+      } else {
+        line += c;
+      }
+    }
+  }
+
+  // Si quedó algo pendiente sin ENTER al final
+  if (line.length() > 0) {
+    if (message.length() > 0) {
+      message += "\n";
+    }
+    message += line;
+  }
+
+  return message;
+}
+
+
+
+

@@ -1,28 +1,35 @@
 void readSMS() { 
   String res;
-  modem.sendAT("+CMGL=\"ALL\"");  
-  modem.waitResponse(500L, res);
-  res.replace("\"", "");
-  res.replace("\r", "");
-  res.replace("\n", ",");
+  //modem.sendAT("+CMGL=\"REC UNREAD\",0");  
+  res = waitForResponse("AT+CMGL=\"REC UNREAD\"", 2000);
+  
+  /*res.replace("\"", "");
+  
   res.replace(",,", ",");
-  res.replace("OK", "");
-  res.replace("ok", "");
-  res.replace(",,", "");
-  Serial.println("SMS:"+res);
+  
+  res.replace(",,", "");*/
+  Serial.println("read SMS:"+res);
 
   if(res.indexOf("CMGL")>=0) {
+    res = res.substring(res.indexOf("\n")+1);
+    res.replace("OK", "");
+    res.replace("ok", "");
+    res.replace("\r", "");
+    res.replace("\n", "");
+    
     String command = res.substring(res.lastIndexOf(",")+1);
     Serial.println("Command: "+command);
     processCommand(command);
+    clearSMS();  
   }    
 
-  clearSMS();    
 }
 
 void clearSMS(){
-  modem.sendAT("+CMGD=,4");
-  modem.waitResponse(1000L);
+  modem.sendAT("+CMGD=0,4");
+  if(modem.waitResponse(5000L)==1){
+    Serial.println("SMSs deleted");
+  }  
 }
 
 void processCommand(String command){
