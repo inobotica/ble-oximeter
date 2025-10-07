@@ -25,7 +25,7 @@ void readConfiguration(){
   preferences.end();
 
   Serial.println("APN: "+apnUrl+" | user:"+apnUser+" | pass:"+apnPass);
-  Serial.println("Server: "+serverUrl+":"+String(port)+serverResource);
+  Serial.println("Server: "+serverUrl+" | port:"+String(port)+" | source:"+serverResource);
   Serial.println("Period: each "+String(reportPeriod)+" mins");
   delay(5000);
 }

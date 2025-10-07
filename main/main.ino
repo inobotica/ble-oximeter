@@ -50,6 +50,7 @@ SIMs:
 // set GSM PIN, if any
 #define GSM_PIN ""
 
+#include "esp_system.h"
 #include <TinyGsmClient.h>
 #include <Ticker.h>
 #include <SPI.h>
@@ -159,6 +160,7 @@ bool sendData = true;
 int reportPeriod = 0;
 String phoneNumber = "";
 float sensibility = 100.0f; // 100mV/A
+bool resetDevice = false;
 
 // Timer interrupt to blink when ble is disconnected
 void IRAM_ATTR onTimer() {
@@ -167,7 +169,7 @@ void IRAM_ATTR onTimer() {
 
   if(uptime>=RESET_DEVICE_AFTER){
     Serial.println("Restarting device");
-    ESP.restart();
+    resetDevice = true;
   }
 
   if (periodCounter >= (reportPeriod*60)) {
@@ -259,19 +261,25 @@ void setup() {
 }
 
 void loop() {
-  String res;
-  Serial.println("================");
+  // Reset device each 8hrs
+  if(resetDevice){
+    esp_restart();
+  }
 
-  // Checks network status
-  isNetworkConnected = modem.isNetworkConnected();
+  String res;
+  Serial.print("================\nUptime:");
+  Serial.println(uptime);
 
   // Restarts modem if needed
   if (!modem.init()) {
     modemRestart();
     delay(2000);
-    Serial.println("Failed to restart modem, attempting to continue without restarting");
+    Serial.println("A restart of modem was needed!");
     return;
   }
+
+  // Checks network status
+  isNetworkConnected = modem.isNetworkConnected();
 
   // Validates BLE state and reconnects if needed
   if (!device_connected) {
@@ -297,7 +305,7 @@ void loop() {
   readSMS();
 
   // Send data when device is connected
-  if ((modem.isGprsConnected() && device_connected) || sendData) {
+  if (device_connected || sendData) {
     Serial.println("Sending data...");
     requestResult = sendPostRequest();
 
@@ -306,7 +314,11 @@ void loop() {
       appendReportToFile();
     }
 
-    txReason = TX_REASON_NORMAL;
-    sendData = false;
+    sendData = !requestResult;
+
+    if(requestResult){
+      txReason = TX_REASON_NORMAL;     
+    } 
+    
   }
 }

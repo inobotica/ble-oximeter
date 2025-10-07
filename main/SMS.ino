@@ -50,7 +50,7 @@ void processCommand(String command){
     // Resets device
     Serial.println("Processing RESET command!");
     clearSMS();
-    ESP.restart();
+    esp_restart();
 
   } else if(commandLower.indexOf("status")>=0){
     // Sends status report

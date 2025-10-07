@@ -2,36 +2,40 @@ bool sendPostRequest(){
   bool requestStatus = false;
   long ti = millis();
 
-  // Validates if client is already connected
-  if(!client.connected()){
-    if (!client.connect(server, port)) {
-      Serial.println("Connection to server");
-
-      if(!modem.isNetworkConnected()){
-        reconnectToGPRS();
-      } else {
-        Serial.println("GPRS connected but not to server!");
-      }      
-
-      return requestStatus;
-    } else {
-      Serial.println("Connected to server!");      
-    }
-  } else {
-    Serial.println("Already connected to server!");      
+  // Checks for GSM network connection
+  if (!modem.isNetworkConnected()) {
+    Serial.println("Not connected to network");
+    modem.waitForNetwork();
   }
 
-  // Making an HTTP POST request
-  Serial.println("POST request...");
-  // Prepare your HTTP POST request data
+  // Checks for GPRS network connection
+  if (!modem.isGprsConnected()) {
+      Serial.println("Connecting to GPRS...");
+      if (!modem.gprsConnect(apn, gprsUser, gprsPass)) {
+          Serial.println("GPRS failed");
+      }
+  }
+
+  // Checks for server connection  
+  Serial.println("GPRS OK, trying TCP...");
+
+  if (client.connect(server, port)) {
+      Serial.println("TCP Connected!");
+  } else {
+      Serial.println("TCP Connection failed");
+      return false;
+  }
+
+  // Making an HTTP POST request  
   String httpRequestData = composeMessage();
-  //deviceAddress.replace(":", "-");
   String resourcePath = String(resource) + imei;
-  
-  client.print(String("POST ") + resourcePath + " HTTP/1.1\r\n");
+  String req = String("POST ") + resourcePath + " HTTP/1.1\r\n";
+  client.print(req);
+  Serial.print(req);
 
   if (port!=80 && port!=443){
-    client.print(String("Host: ") + server + ":"+ String(port) + "\r\n");
+    req = String("Host: ") + server + ":"+ String(port) + "\r\n";
+    client.print(req);
   } else {
     client.print(String("Host: ") + server + "\r\n");
   }
